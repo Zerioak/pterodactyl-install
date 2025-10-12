@@ -18,7 +18,7 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # 1️⃣ Update system
-info "Updating system packages..."
+info "Updating & Upgrading system packages..."
 apt update -y && apt upgrade -y
 success "System updated!"
 
