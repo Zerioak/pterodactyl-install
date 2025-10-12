@@ -1,9 +1,9 @@
-#!/data/data/com.termux/files/usr/bin/bash
+#!/bin/bash
 # =====================================================
 # 🚀 PTERODACTYL PANEL INSTALLER
 # 🛠️ Developed by Zerioak
 # 🌐 GitHub: https://github.com/Zerioak/pterodactyl-install
-# (Credit hidden from Termux output)
+# (Credit hidden from output)
 # =====================================================
 
 # Colored output functions
@@ -11,30 +11,34 @@ info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
 error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
 
-# 0️⃣ Ensure running in Termux
-if [ -z "$PREFIX" ]; then
-    error "This script is optimized for Termux only!"
-    exit 1
+# 0️⃣ Ensure running as root
+if [[ $EUID -ne 0 ]]; then
+   error "Please run as root!"
+   exit 1
 fi
 
-# 1️⃣ Update packages
-info "Updating Termux packages..."
-pkg update -y && pkg upgrade -y
+# 1️⃣ Update system
+info "Updating system packages..."
+apt update -y && apt upgrade -y
 success "System updated!"
 
-# 2️⃣ Install dependencies
-info "Installing dependencies..."
-pkg install -y root-repo x11-repo curl git nano wget proot-distro
-success "Dependencies installed!"
+# 2️⃣ Install Docker & Docker Compose
+info "Installing Docker & Docker Compose..."
+apt install -y docker.io docker-compose curl nano git
+success "Docker installed!"
 
-# 3️⃣ Install Docker (Termux requires proot-distro Ubuntu)
-info "Setting up Docker in Ubuntu proot-distro..."
-proot-distro install ubuntu-22.04
-proot-distro login ubuntu-22.04 -- bash << 'EOL'
-apt update -y && apt upgrade -y
-apt install -y docker.io docker-compose nano git curl
-EOL
-success "Docker installed in Ubuntu distro!"
+# 3️⃣ Start Docker
+info "Starting Docker service..."
+systemctl enable docker
+systemctl start docker
+sleep 5
+
+# Test Docker
+if ! docker info >/dev/null 2>&1; then
+    error "Docker daemon is not running. Exiting."
+    exit 1
+fi
+success "Docker is running!"
 
 # 4️⃣ Create directories
 info "Creating Pterodactyl directories..."
@@ -56,7 +60,7 @@ x-common:
     &panel-environment
     APP_URL: "https://pterodactyl.example.com"
     APP_TIMEZONE: "Asia/Kolkata"
-    APP_SERVICE_AUTHOR: "noreply@gmail.com"
+    APP_SERVICE_AUTHOR: "zerioak@gmail.com"
     TRUSTED_PROXIES: "*"
   mail:
     &mail-environment
@@ -125,19 +129,19 @@ success "Subfolders created!"
 
 # 7️⃣ Start containers
 info "Starting Docker containers..."
-proot-distro login ubuntu-22.04 -- docker-compose up -d
+docker-compose up -d
 success "Containers started successfully!"
 
 # 8️⃣ Run migrations
 info "Running database migrations..."
-proot-distro login ubuntu-22.04 -- docker-compose run --rm panel php artisan migrate --seed
+docker-compose run --rm panel php artisan migrate --seed
 success "✅ Migrations completed!"
 
 # 9️⃣ Manual admin creation
 echo "==============================================="
 echo "⚠️ Manual Step Required:"
 echo "Run the following to create admin user manually:"
-echo "  proot-distro login ubuntu-22.04 -- docker-compose run --rm panel php artisan p:user:make"
+echo "  docker-compose run --rm panel php artisan p:user:make"
 echo "Enter 'yes' for admin, provide email, username, password."
 read -p "Press ENTER after creating your admin user..."
 
