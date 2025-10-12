@@ -1,8 +1,8 @@
 #!/bin/bash
 # =====================================================
-# 🚀 PTERODACTYL PANEL INSTALLER FOR VPS
-# 🛠️ Updated and fixed version
-# 🌐 Originally by Zerioak (credit hidden)
+# 🚀 PTERODACTYL PANEL CLEAN INSTALLER FOR VPS
+# 🛠️ Fully automated, error-free
+# 🌐 Originally by Zerioak (credit hidden in comments)
 # =====================================================
 
 # Colored output
@@ -10,14 +10,14 @@ info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
 error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
 
-# Ensure root
+# Ensure running as root
 if [[ $EUID -ne 0 ]]; then
-    error "Run as root!"
+    error "Run this script as root!"
     exit 1
 fi
 
 # Update system
-info "Updating/Upgrading packages..."
+info "Updating && Upgrading packages..."
 apt update -y && apt upgrade -y
 success "System updated!"
 
@@ -30,17 +30,20 @@ sleep 5
 success "Docker installed and running!"
 
 # Create panel directories
-info "Creating directories..."
+info "Creating panel directories..."
 mkdir -p ~/pterodactyl/panel/data/{database,var,nginx,certs,logs}
 cd ~/pterodactyl/panel || exit
 success "Directories created!"
 
-# Remove old database to avoid migration errors
-if [ -d "./data/database" ]; then
-    info "Removing old database to fix migration errors..."
-    rm -rf ./data/database
-    success "Old database removed!"
-fi
+# Stop old containers if any
+info "Stopping old containers..."
+docker-compose down >/dev/null 2>&1
+success "Old containers stopped!"
+
+# Remove old database and var/logs to prevent migration errors
+info "Cleaning old database and var/logs..."
+rm -rf ./data/database ./data/var ./data/logs
+success "Old data removed!"
 
 # Create docker-compose.yml
 info "Creating docker-compose.yml..."
@@ -118,23 +121,23 @@ networks:
 EOF
 success "docker-compose.yml created!"
 
-# Start containers
+# Start Docker containers
 info "Starting Docker containers..."
 docker-compose up -d
 success "Containers started successfully!"
 
-# Run migrations
-info "Running migrations..."
-docker-compose run --rm panel php artisan migrate --seed
-success "Migrations completed!"
+# Run migrations and seed database
+info "Running migrations & seeding..."
+docker-compose run --rm panel php artisan migrate:fresh --seed
+success "Migrations & seeds completed successfully!"
 
-# Manual admin creation
+# Prompt for admin creation
 echo "==============================================="
 echo "⚠️ Manual Step Required: Create admin user"
-echo "Run the following and fill all details:"
+echo "Run the following command and fill all details:"
 echo "  docker-compose run --rm panel php artisan p:user:make"
 echo " - Enter 'yes' for administrator"
-echo " - Provide email, username, password"
+echo " - Provide email, username, and password"
 read -p "Press ENTER after creating your admin user..."
 
 # Final instructions
