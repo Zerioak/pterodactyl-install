@@ -2,7 +2,7 @@
 # =====================================================
 # 🚀 PTERODACTYL PANEL CLEAN INSTALLER FOR VPS
 # 🛠️ Fully automated, error-free
-# 🌐 Originally by Zerioak (credit hidden in comments)
+# 🌐 Adapted from Zerioak
 # =====================================================
 
 # Colored output
@@ -17,11 +17,11 @@ if [[ $EUID -ne 0 ]]; then
 fi
 
 # Update system
-info "Updating && Upgrading packages..."
+info "Updating packages..."
 apt update -y && apt upgrade -y
 success "System updated!"
 
-# Install Docker and Docker Compose
+# Install Docker & Docker Compose
 info "Installing Docker & Docker Compose..."
 apt install -y docker.io docker-compose curl nano git
 systemctl enable docker
@@ -40,9 +40,10 @@ info "Stopping old containers..."
 docker-compose down >/dev/null 2>&1
 success "Old containers stopped!"
 
-# Remove old database and var/logs to prevent migration errors
-info "Cleaning old database and var/logs..."
+# Remove old database and logs to prevent migration errors
+info "Cleaning old database, var, and logs..."
 rm -rf ./data/database ./data/var ./data/logs
+mkdir -p ./data/database ./data/var ./data/logs
 success "Old data removed!"
 
 # Create docker-compose.yml
@@ -105,7 +106,6 @@ services:
       <<: [*panel-environment, *mail-environment]
       DB_PASSWORD: *db-password
       APP_ENV: "production"
-      APP_ENVIRONMENT_ONLY: "false"
       CACHE_DRIVER: "redis"
       SESSION_DRIVER: "redis"
       QUEUE_DRIVER: "redis"
@@ -126,9 +126,14 @@ info "Starting Docker containers..."
 docker-compose up -d
 success "Containers started successfully!"
 
+# Wait for database to initialize
+info "Waiting 15 seconds for database to initialize..."
+sleep 15
+
 # Run migrations and seed database
 info "Running migrations & seeding..."
-docker-compose run --rm panel php artisan migrate:fresh --seed
+docker-compose run --rm panel php artisan migrate --force
+docker-compose run --rm panel php artisan db:seed --force
 success "Migrations & seeds completed successfully!"
 
 # Prompt for admin creation
