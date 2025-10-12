@@ -2,31 +2,55 @@
 # =====================================================
 # 🚀 Pterodactyl Panel Auto Installer
 # 🛠️ First made by: Zerioak <zerioak@gmail.com>
-# 🌐 GitHub: https://github.com/zerioak
+# 🌐 GitHub: https://github.com/Zerioak/pterodactyl-install
 # =====================================================
 
-# Function for colored output
+# Colored output functions
 info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
 error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
 
-# 1️⃣ Update & Upgrade System
+# Check if running as root
+if [[ $EUID -ne 0 ]]; then
+   error "Please run as root!"
+   exit 1
+fi
+
+# 1️⃣ Update system
 info "Updating system packages..."
 apt update -y && apt upgrade -y
 success "System updated successfully!"
 
 # 2️⃣ Install Docker & Docker Compose
 info "Installing Docker & Docker Compose..."
-apt install -y docker.io docker-compose curl nano
+apt install -y docker.io docker-compose curl nano git
 success "Docker & Docker Compose installed!"
 
-# 3️⃣ Create Pterodactyl Directories
-info "Setting up Pterodactyl directories..."
+# 3️⃣ Check if systemd exists
+if pidof systemd >/dev/null; then
+    info "Systemd detected. Enabling Docker service..."
+    systemctl enable docker
+    systemctl start docker
+else
+    info "No systemd detected. Starting Docker daemon manually..."
+    dockerd > /var/log/dockerd.log 2>&1 &
+    sleep 5
+fi
+
+# Test Docker
+if ! docker info >/dev/null 2>&1; then
+    error "Docker daemon is not running. Exiting."
+    exit 1
+fi
+success "Docker is running!"
+
+# 4️⃣ Create directories
+info "Creating Pterodactyl directories..."
 mkdir -p ~/pterodactyl/panel/data
-cd ~/pterodactyl/panel || { error "Failed to enter panel directory"; exit 1; }
+cd ~/pterodactyl/panel || exit
 success "Directories created!"
 
-# 4️⃣ Create docker-compose.yml
+# 5️⃣ Create docker-compose.yml
 info "Creating docker-compose.yml..."
 cat > docker-compose.yml << 'EOF'
 version: '3.8'
@@ -102,17 +126,17 @@ networks:
 EOF
 success "docker-compose.yml created!"
 
-# 5️⃣ Create Data Subfolders
+# 6️⃣ Create subfolders
 info "Creating data subfolders..."
 mkdir -p ./data/{database,var,nginx,certs,logs}
 success "Subfolders created!"
 
-# 6️⃣ Start Docker Containers
+# 7️⃣ Start containers
 info "Starting Docker containers..."
 docker-compose up -d
 success "Containers started successfully!"
 
-# 7️⃣ Create Pterodactyl Panel User
+# 8️⃣ Create initial Pterodactyl user
 info "Creating Pterodactyl panel user..."
 docker-compose run --rm panel php artisan p:user:make
 success "✅ Setup Complete! Visit your panel at APP_URL"
