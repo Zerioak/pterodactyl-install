@@ -1,59 +1,48 @@
 #!/bin/bash
 # =====================================================
 # 🚀 PTERODACTYL PANEL INSTALLER FOR VPS
-# 🛠️ Developed by Zerioak
-# 🌐 GitHub: https://github.com/Zerioak/pterodactyl-install
-# (Credit hidden in comments)
+# 🛠️ Updated and fixed version
+# 🌐 Originally by Zerioak (credit hidden)
 # =====================================================
 
-# Colored output functions
+# Colored output
 info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
 error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
 
-# Ensure running as root
+# Ensure root
 if [[ $EUID -ne 0 ]]; then
-   error "Please run as root!"
-   exit 1
+    error "Run as root!"
+    exit 1
 fi
 
-# 1️⃣ Update system
-info "Updating & Upgrading system packages..."
+# Update system
+info "Updating/Upgrading packages..."
 apt update -y && apt upgrade -y
 success "System updated!"
 
-# 2️⃣ Install Docker & Docker Compose
+# Install Docker and Docker Compose
 info "Installing Docker & Docker Compose..."
 apt install -y docker.io docker-compose curl nano git
-success "Docker installed!"
-
-# 3️⃣ Start Docker
-info "Starting Docker service..."
 systemctl enable docker
 systemctl start docker
 sleep 5
+success "Docker installed and running!"
 
-# Test Docker
-if ! docker info >/dev/null 2>&1; then
-    error "Docker daemon is not running. Exiting."
-    exit 1
-fi
-success "Docker is running!"
-
-# 4️⃣ Create directories
-info "Creating Pterodactyl directories..."
-mkdir -p ~/pterodactyl/panel/data
+# Create panel directories
+info "Creating directories..."
+mkdir -p ~/pterodactyl/panel/data/{database,var,nginx,certs,logs}
 cd ~/pterodactyl/panel || exit
 success "Directories created!"
 
-# 5️⃣ Remove old database to prevent migration errors
+# Remove old database to avoid migration errors
 if [ -d "./data/database" ]; then
-    info "Old database found, removing to prevent migration errors..."
+    info "Removing old database to fix migration errors..."
     rm -rf ./data/database
     success "Old database removed!"
 fi
 
-# 6️⃣ Create docker-compose.yml
+# Create docker-compose.yml
 info "Creating docker-compose.yml..."
 cat > docker-compose.yml << 'EOF'
 version: '3.8'
@@ -129,37 +118,32 @@ networks:
 EOF
 success "docker-compose.yml created!"
 
-# 7️⃣ Create data subfolders
-info "Creating data subfolders..."
-mkdir -p ./data/{database,var,nginx,certs,logs}
-success "Subfolders created!"
-
-# 8️⃣ Start containers
+# Start containers
 info "Starting Docker containers..."
 docker-compose up -d
 success "Containers started successfully!"
 
-# 9️⃣ Run migrations
-info "Running database migrations..."
+# Run migrations
+info "Running migrations..."
 docker-compose run --rm panel php artisan migrate --seed
-success "✅ Migrations completed!"
+success "Migrations completed!"
 
-# 🔟 Manual admin creation
+# Manual admin creation
 echo "==============================================="
 echo "⚠️ Manual Step Required: Create admin user"
-echo "Run the following command and fill all details:"
+echo "Run the following and fill all details:"
 echo "  docker-compose run --rm panel php artisan p:user:make"
 echo " - Enter 'yes' for administrator"
-echo " - Provide email, username, and password"
+echo " - Provide email, username, password"
 read -p "Press ENTER after creating your admin user..."
 
-# 11️⃣ Final instructions
+# Final instructions
 echo "==============================================="
 echo "🌐 Access your Pterodactyl panel:"
 echo "   Local: http://localhost:8030"
-echo "   Expose via Cloudflared tunnel:"
+echo "   Expose via Cloudflared:"
 echo "   cloudflared tunnel --url http://localhost:8030"
 echo ""
-echo "📥 After panel setup, download Wings daemon from:"
+echo "📥 After panel setup, download Wings daemon:"
 echo "   https://pterodactyl.io/wings/installing.html"
 echo "==============================================="
