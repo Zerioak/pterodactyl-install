@@ -1,9 +1,9 @@
 #!/bin/bash
 # =====================================================
-# 🚀 PTERODACTYL PANEL INSTALLER
+# 🚀 PTERODACTYL PANEL INSTALLER FOR VPS
 # 🛠️ Developed by Zerioak
 # 🌐 GitHub: https://github.com/Zerioak/pterodactyl-install
-# (Credit hidden from output)
+# (Credit hidden in comments)
 # =====================================================
 
 # Colored output functions
@@ -11,7 +11,7 @@ info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
 error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
 
-# 0️⃣ Ensure running as root
+# Ensure running as root
 if [[ $EUID -ne 0 ]]; then
    error "Please run as root!"
    exit 1
@@ -46,7 +46,14 @@ mkdir -p ~/pterodactyl/panel/data
 cd ~/pterodactyl/panel || exit
 success "Directories created!"
 
-# 5️⃣ Create docker-compose.yml
+# 5️⃣ Remove old database to prevent migration errors
+if [ -d "./data/database" ]; then
+    info "Old database found, removing to prevent migration errors..."
+    rm -rf ./data/database
+    success "Old database removed!"
+fi
+
+# 6️⃣ Create docker-compose.yml
 info "Creating docker-compose.yml..."
 cat > docker-compose.yml << 'EOF'
 version: '3.8'
@@ -122,30 +129,31 @@ networks:
 EOF
 success "docker-compose.yml created!"
 
-# 6️⃣ Create subfolders
+# 7️⃣ Create data subfolders
 info "Creating data subfolders..."
 mkdir -p ./data/{database,var,nginx,certs,logs}
 success "Subfolders created!"
 
-# 7️⃣ Start containers
+# 8️⃣ Start containers
 info "Starting Docker containers..."
 docker-compose up -d
 success "Containers started successfully!"
 
-# 8️⃣ Run migrations
+# 9️⃣ Run migrations
 info "Running database migrations..."
 docker-compose run --rm panel php artisan migrate --seed
 success "✅ Migrations completed!"
 
-# 9️⃣ Manual admin creation
+# 🔟 Manual admin creation
 echo "==============================================="
-echo "⚠️ Manual Step Required:"
-echo "Run the following to create admin user manually:"
+echo "⚠️ Manual Step Required: Create admin user"
+echo "Run the following command and fill all details:"
 echo "  docker-compose run --rm panel php artisan p:user:make"
-echo "Enter 'yes' for admin, provide email, username, password."
+echo " - Enter 'yes' for administrator"
+echo " - Provide email, username, and password"
 read -p "Press ENTER after creating your admin user..."
 
-# 🔟 Final instructions
+# 11️⃣ Final instructions
 echo "==============================================="
 echo "🌐 Access your Pterodactyl panel:"
 echo "   Local: http://localhost:8030"
