@@ -1,0 +1,118 @@
+#!/bin/bash
+# =====================================================
+# 🚀 Pterodactyl Panel Auto Installer
+# 🛠️ First made by: Zerioak <zerioak@gmail.com>
+# 🌐 GitHub: https://github.com/zerioak
+# =====================================================
+
+# Function for colored output
+info() { echo -e "\e[34m[INFO]\e[0m $1"; }
+success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
+error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
+
+# 1️⃣ Update & Upgrade System
+info "Updating system packages..."
+apt update -y && apt upgrade -y
+success "System updated successfully!"
+
+# 2️⃣ Install Docker & Docker Compose
+info "Installing Docker & Docker Compose..."
+apt install -y docker.io docker-compose curl nano
+success "Docker & Docker Compose installed!"
+
+# 3️⃣ Create Pterodactyl Directories
+info "Setting up Pterodactyl directories..."
+mkdir -p ~/pterodactyl/panel/data
+cd ~/pterodactyl/panel || { error "Failed to enter panel directory"; exit 1; }
+success "Directories created!"
+
+# 4️⃣ Create docker-compose.yml
+info "Creating docker-compose.yml..."
+cat > docker-compose.yml << 'EOF'
+version: '3.8'
+
+x-common:
+  database:
+    &db-environment
+    MYSQL_PASSWORD: &db-password "CHANGE_ME"
+    MYSQL_ROOT_PASSWORD: "CHANGE_ME_TOO"
+  panel:
+    &panel-environment
+    APP_URL: "https://pterodactyl.example.com"
+    APP_TIMEZONE: "Asia/Kolkata"
+    APP_SERVICE_AUTHOR: "zerioak@gmail.com"
+    TRUSTED_PROXIES: "*"
+  mail:
+    &mail-environment
+    MAIL_FROM: "noreply@example.com"
+    MAIL_DRIVER: "smtp"
+    MAIL_HOST: "mail"
+    MAIL_PORT: "1025"
+    MAIL_USERNAME: ""
+    MAIL_PASSWORD: ""
+    MAIL_ENCRYPTION: "true"
+
+services:
+  database:
+    image: mariadb:10.5
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    volumes:
+      - "./data/database:/var/lib/mysql"
+    environment:
+      <<: *db-environment
+      MYSQL_DATABASE: "panel"
+      MYSQL_USER: "pterodactyl"
+
+  cache:
+    image: redis:alpine
+    restart: always
+
+  panel:
+    image: ghcr.io/pterodactyl/panel:latest
+    restart: always
+    ports:
+      - "8030:80"
+      - "4433:443"
+    links:
+      - database
+      - cache
+    volumes:
+      - "./data/var:/app/var"
+      - "./data/nginx:/etc/nginx/http.d"
+      - "./data/certs:/etc/letsencrypt"
+      - "./data/logs:/app/storage/logs"
+    environment:
+      <<: [*panel-environment, *mail-environment]
+      DB_PASSWORD: *db-password
+      APP_ENV: "production"
+      APP_ENVIRONMENT_ONLY: "false"
+      CACHE_DRIVER: "redis"
+      SESSION_DRIVER: "redis"
+      QUEUE_DRIVER: "redis"
+      REDIS_HOST: "cache"
+      DB_HOST: "database"
+      DB_PORT: "3306"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+EOF
+success "docker-compose.yml created!"
+
+# 5️⃣ Create Data Subfolders
+info "Creating data subfolders..."
+mkdir -p ./data/{database,var,nginx,certs,logs}
+success "Subfolders created!"
+
+# 6️⃣ Start Docker Containers
+info "Starting Docker containers..."
+docker-compose up -d
+success "Containers started successfully!"
+
+# 7️⃣ Create Pterodactyl Panel User
+info "Creating Pterodactyl panel user..."
+docker-compose run --rm panel php artisan p:user:make
+success "✅ Setup Complete! Visit your panel at APP_URL"
