@@ -44,7 +44,11 @@ Ports 8030 (panel) and 4433 (HTTPS) open
 
 **1️⃣ Run the installer**
 
-curl -sSL https://raw.githubusercontent.com/Zerioak/pterodactyl-install/main/install.sh | bash
+```
+curl -sSL https://raw.githubusercontent.com/Zerioak/pterodactyl-install/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
+```
 
 > Replace yourusername with your GitHub username if using your forked repo.
 
