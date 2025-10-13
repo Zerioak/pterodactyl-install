@@ -1,50 +1,45 @@
 #!/bin/bash
 # =====================================================
-# 🚀 PTERODACTYL PANEL CLEAN INSTALLER FOR VPS
-# 🛠️ Fully automated, error-free
-# 🌐 Adapted from Zerioak
+# 🚀 PTERODACTYL PANEL CLEAN INSTALLER - FULL AUTO FLOW
+# 🛠️ Fully automated, clean DB, user creation continues
 # =====================================================
 
-# Colored output
 info() { echo -e "\e[34m[INFO]\e[0m $1"; }
 success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
 error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
 
-# Ensure running as root
 if [[ $EUID -ne 0 ]]; then
     error "Run this script as root!"
     exit 1
 fi
 
-# Update system
-info "Updating packages..."
+# Update packages
+info "Updating system..."
 apt update -y && apt upgrade -y
 success "System updated!"
 
-# Install Docker & Docker Compose
-info "Installing Docker & Docker Compose..."
+# Install Docker
+info "Installing Docker & dependencies..."
 apt install -y docker.io docker-compose curl nano git
 systemctl enable docker
 systemctl start docker
-sleep 5
-success "Docker installed and running!"
+success "Docker ready!"
 
-# Create panel directories
-info "Creating panel directories..."
+# Prepare directories
+info "Setting up directories..."
 mkdir -p ~/pterodactyl/panel/data/{database,var,nginx,certs,logs}
 cd ~/pterodactyl/panel || exit
 success "Directories created!"
 
-# Stop old containers if any
-info "Stopping old containers..."
+# Stop old containers
+info "Stopping any existing panel containers..."
 docker-compose down >/dev/null 2>&1
-success "Old containers stopped!"
 
-# Remove old database and logs to prevent migration errors
-info "Cleaning old database, var, and logs..."
+# Clean database to avoid migration errors
+info "Cleaning old data to prevent duplicate column issues..."
 rm -rf ./data/database ./data/var ./data/logs
 mkdir -p ./data/database ./data/var ./data/logs
-success "Old data removed!"
+success "Old DB and logs cleared!"
 
 # Create docker-compose.yml
 info "Creating docker-compose.yml..."
@@ -58,9 +53,8 @@ x-common:
     MYSQL_ROOT_PASSWORD: "CHANGE_ME_TOO"
   panel:
     &panel-environment
-    APP_URL: "https://pterodactyl.example.com"
+    APP_URL: "http://localhost"
     APP_TIMEZONE: "Asia/Kolkata"
-    APP_SERVICE_AUTHOR: "zerioak@gmail.com"
     TRUSTED_PROXIES: "*"
   mail:
     &mail-environment
@@ -93,7 +87,6 @@ services:
     restart: always
     ports:
       - "8030:80"
-      - "4433:443"
     links:
       - database
       - cache
@@ -112,46 +105,30 @@ services:
       REDIS_HOST: "cache"
       DB_HOST: "database"
       DB_PORT: "3306"
-
-networks:
-  default:
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
 EOF
-success "docker-compose.yml created!"
 
-# Start Docker containers
-info "Starting Docker containers..."
+success "docker-compose.yml ready!"
+
+# Start containers
+info "Launching Docker containers..."
 docker-compose up -d
-success "Containers started successfully!"
-
-# Wait for database to initialize
-info "Waiting 15 seconds for database to initialize..."
 sleep 15
+success "Containers started!"
 
-# Run migrations and seed database
-info "Running migrations & seeding..."
+# Run migrations
+info "Running migrations..."
 docker-compose run --rm panel php artisan migrate --force
 docker-compose run --rm panel php artisan db:seed --force
-success "Migrations & seeds completed successfully!"
+success "Migrations complete!"
 
-# Prompt for admin creation
-echo "==============================================="
-echo "⚠️ Manual Step Required: Create admin user"
-echo "Run the following command and fill all details:"
-echo "  docker-compose run --rm panel php artisan p:user:make"
-echo " - Enter 'yes' for administrator"
-echo " - Provide email, username, and password"
-read -p "Press ENTER after creating your admin user..."
+# Auto user creation prompt without stopping
+info "Now creating admin user. Fill email, username, password, and type YES when asked for admin."
+docker-compose run --rm panel php artisan p:user:make
 
-# Final instructions
+# Final message
 echo "==============================================="
-echo "🌐 Access your Pterodactyl panel:"
-echo "   Local: http://localhost:8030"
-echo "   Expose via Cloudflared:"
+echo "🎉 Setup Complete!"
+echo "🌍 Visit: http://<YOUR-IP>:8030"
+echo "⚠️ If behind Cloudflare Tunnel, run:"
 echo "   cloudflared tunnel --url http://localhost:8030"
-echo ""
-echo "📥 After panel setup, download Wings daemon:"
-echo "   https://pterodactyl.io/wings/installing.html"
 echo "==============================================="
