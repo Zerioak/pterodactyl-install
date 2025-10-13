@@ -50,8 +50,6 @@ chmod +x install.sh
 ./install.sh
 ```
 
-> Replace yourusername with your GitHub username if using your forked repo.
-
 
 ---
 
