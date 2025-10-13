@@ -1,7 +1,7 @@
 #!/bin/bash
 # =====================================================
-# 🚀 PTERODACTYL PANEL INSTALLER - INTERACTIVE
-# 🛠️ Fully automated after user inputs
+# 🚀 PTERODACTYL PANEL INSTALLER - REAL INTERACTIVE
+# 🛠️ Stops for admin input, then installs fully
 # =====================================================
 
 # Colors
@@ -12,7 +12,7 @@ NC='\033[0m'
 info() { echo -e "${CYAN}[INFO]${NC} $1"; }
 success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
 
-# Ensure root
+# Ensure script is run as root
 if [[ $EUID -ne 0 ]]; then
     echo "Run this script as root!"
     exit 1
@@ -21,21 +21,31 @@ fi
 # -----------------------------
 # Interactive admin setup
 # -----------------------------
-echo -e "${CYAN}[?] Enter admin email:${NC}"
-read ADMIN_EMAIL
+while [[ -z "$ADMIN_EMAIL" ]]; do
+    echo -e "${CYAN}[?] Enter admin email:${NC}"
+    read ADMIN_EMAIL
+done
 
-echo -e "${CYAN}[?] Enter admin username:${NC}"
-read ADMIN_USERNAME
+while [[ -z "$ADMIN_USERNAME" ]]; do
+    echo -e "${CYAN}[?] Enter admin username:${NC}"
+    read ADMIN_USERNAME
+done
 
-echo -e "${CYAN}[?] Enter admin first name:${NC}"
-read ADMIN_FIRSTNAME
+while [[ -z "$ADMIN_FIRSTNAME" ]]; do
+    echo -e "${CYAN}[?] Enter admin first name:${NC}"
+    read ADMIN_FIRSTNAME
+done
 
-echo -e "${CYAN}[?] Enter admin last name:${NC}"
-read ADMIN_LASTNAME
+while [[ -z "$ADMIN_LASTNAME" ]]; do
+    echo -e "${CYAN}[?] Enter admin last name:${NC}"
+    read ADMIN_LASTNAME
+done
 
-echo -e "${CYAN}[?] Enter admin password:${NC}"
-read -s ADMIN_PASSWORD
-echo
+while [[ -z "$ADMIN_PASSWORD" ]]; do
+    echo -e "${CYAN}[?] Enter admin password:${NC}"
+    read -s ADMIN_PASSWORD
+    echo
+done
 
 # -----------------------------
 # System update & Docker install
@@ -158,7 +168,7 @@ docker-compose run --rm panel php artisan db:seed --force
 success "Migrations & seeds completed!"
 
 # -----------------------------
-# Create admin user interactively
+# Create admin user
 # -----------------------------
 info "Creating admin user..."
 docker-compose run --rm panel php artisan tinker <<EOT
