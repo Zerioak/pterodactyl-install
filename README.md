@@ -70,8 +70,9 @@ cloudflared tunnel --url http://localhost:8030
 **4️⃣ Install Wings daemon**
 
 Follow the official guide for Wings 
+```
 bash <(curl -s https://pterodactyl-installer.se)
-
+```
 
 
 ---
