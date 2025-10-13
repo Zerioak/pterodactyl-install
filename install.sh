@@ -1,47 +1,73 @@
 #!/bin/bash
 # =====================================================
-# 🚀 PTERODACTYL PANEL CLEAN INSTALLER - FULL AUTO FLOW
-# 🛠️ Fully automated, clean DB, user creation continues
+# 🚀 PTERODACTYL PANEL INSTALLER - INTERACTIVE
+# 🛠️ Fully automated after user inputs
 # =====================================================
 
-info() { echo -e "\e[34m[INFO]\e[0m $1"; }
-success() { echo -e "\e[32m[SUCCESS]\e[0m $1"; }
-error() { echo -e "\e[31m[ERROR]\e[0m $1"; }
+# Colors
+CYAN='\033[0;36m'
+GREEN='\033[0;32m'
+NC='\033[0m'
 
+info() { echo -e "${CYAN}[INFO]${NC} $1"; }
+success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+
+# Ensure root
 if [[ $EUID -ne 0 ]]; then
-    error "Run this script as root!"
+    echo "Run this script as root!"
     exit 1
 fi
 
-# Update packages
+# -----------------------------
+# Interactive admin setup
+# -----------------------------
+echo -e "${CYAN}[?] Enter admin email:${NC}"
+read ADMIN_EMAIL
+
+echo -e "${CYAN}[?] Enter admin username:${NC}"
+read ADMIN_USERNAME
+
+echo -e "${CYAN}[?] Enter admin first name:${NC}"
+read ADMIN_FIRSTNAME
+
+echo -e "${CYAN}[?] Enter admin last name:${NC}"
+read ADMIN_LASTNAME
+
+echo -e "${CYAN}[?] Enter admin password:${NC}"
+read -s ADMIN_PASSWORD
+echo
+
+# -----------------------------
+# System update & Docker install
+# -----------------------------
 info "Updating system..."
 apt update -y && apt upgrade -y
 success "System updated!"
 
-# Install Docker
 info "Installing Docker & dependencies..."
-apt install -y docker.io docker-compose curl nano git
+apt install -y docker.io docker-compose curl git nano
 systemctl enable docker
 systemctl start docker
 success "Docker ready!"
 
-# Prepare directories
-info "Setting up directories..."
+# -----------------------------
+# Setup panel directories
+# -----------------------------
+info "Creating panel directories..."
 mkdir -p ~/pterodactyl/panel/data/{database,var,nginx,certs,logs}
 cd ~/pterodactyl/panel || exit
-success "Directories created!"
+success "Directories ready!"
 
-# Stop old containers
-info "Stopping any existing panel containers..."
+# Stop old containers and clean old data
+info "Stopping old containers and cleaning old DB/logs..."
 docker-compose down >/dev/null 2>&1
-
-# Clean database to avoid migration errors
-info "Cleaning old data to prevent duplicate column issues..."
 rm -rf ./data/database ./data/var ./data/logs
 mkdir -p ./data/database ./data/var ./data/logs
-success "Old DB and logs cleared!"
+success "Old data cleaned!"
 
+# -----------------------------
 # Create docker-compose.yml
+# -----------------------------
 info "Creating docker-compose.yml..."
 cat > docker-compose.yml << 'EOF'
 version: '3.8'
@@ -105,30 +131,55 @@ services:
       REDIS_HOST: "cache"
       DB_HOST: "database"
       DB_PORT: "3306"
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
 EOF
 
-success "docker-compose.yml ready!"
+success "docker-compose.yml created!"
 
-# Start containers
-info "Launching Docker containers..."
+# -----------------------------
+# Start Docker containers
+# -----------------------------
+info "Starting Docker containers..."
 docker-compose up -d
 sleep 15
 success "Containers started!"
 
-# Run migrations
-info "Running migrations..."
+# -----------------------------
+# Run migrations & seed
+# -----------------------------
+info "Running migrations & seed..."
 docker-compose run --rm panel php artisan migrate --force
 docker-compose run --rm panel php artisan db:seed --force
-success "Migrations complete!"
+success "Migrations & seeds completed!"
 
-# Auto user creation prompt without stopping
-info "Now creating admin user. Fill email, username, password, and type YES when asked for admin."
-docker-compose run --rm panel php artisan p:user:make
+# -----------------------------
+# Create admin user interactively
+# -----------------------------
+info "Creating admin user..."
+docker-compose run --rm panel php artisan tinker <<EOT
+\$user = new \App\Models\User();
+\$user->email = "$ADMIN_EMAIL";
+\$user->username = "$ADMIN_USERNAME";
+\$user->name_first = "$ADMIN_FIRSTNAME";
+\$user->name_last = "$ADMIN_LASTNAME";
+\$user->root_admin = true;
+\$user->password = bcrypt("$ADMIN_PASSWORD");
+\$user->save();
+EOT
 
-# Final message
+success "Admin user created!"
+
+# -----------------------------
+# Finish
+# -----------------------------
 echo "==============================================="
-echo "🎉 Setup Complete!"
-echo "🌍 Visit: http://<YOUR-IP>:8030"
-echo "⚠️ If behind Cloudflare Tunnel, run:"
-echo "   cloudflared tunnel --url http://localhost:8030"
+echo "🎉 Pterodactyl Panel Installed Successfully!"
+echo "🔗 Panel URL: http://<YOUR_SERVER_IP>:8030"
+echo "📧 Admin Email: $ADMIN_EMAIL"
+echo "🔑 Admin Password: $ADMIN_PASSWORD"
 echo "==============================================="
