@@ -60,7 +60,7 @@ sudo dpkg -i cloudflared-linux-amd64.deb
 cloudflared --version
 ```
 
-### **2️⃣ Authenticate Cloudflare (Not Important if not have or have domian)**
+### **2️⃣ Authenticate Cloudflare (Not Important if have or not have domain)**
 
 ```bash
 cloudflared tunnel login
