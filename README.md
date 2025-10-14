@@ -21,7 +21,7 @@
 ✅ **Starts all required Docker containers instantly**  
 ✅ **Runs database migrations and seeds default eggs automatically**  
 ✅ **Prompts you to create an admin user upon setup completion**  
-✅ **Provides panel access link and Wings installation guidance**
+✅ **Provides panel access link, Wings setup guidance, and optional Cloudflared tunnel**
 
 > 💡 **Installer script by:** **Zerioak**  
 > 🐉 **Pterodactyl Panel by:** **Pterodactyl Software**
@@ -50,15 +50,49 @@ chmod +x install.sh
 
 ---
 
+## 🌐 **Optional: Install Cloudflared**
+
+### **1️⃣ Download & Install**
+
+```bash
+curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+sudo dpkg -i cloudflared-linux-amd64.deb
+cloudflared --version
+```
+
+### **2️⃣ Authenticate Cloudflare (Optional for tunnels)**
+
+```bash
+cloudflared tunnel login
+```
+
+### **3️⃣ Run a Quick Tunnel**
+
+```bash
+cloudflared tunnel --url http://localhost:8030
+```
+
+- You’ll get a public URL like:  
+  `https://random-subdomain.trycloudflare.com`
+
+### **4️⃣ Run as a Background Service (Optional)**
+
+```bash
+cloudflared tunnel create ptero-panel
+cloudflared tunnel route dns ptero-panel panel.example.com
+sudo cloudflared service install
+```
+
+> Now your panel is publicly accessible via Cloudflare.
+
+---
+
 ## 🌍 **Access the Panel**
 
 | Access Method | Command / URL |
 |--------------|--------------|
 | 🖥️ **Local Access** | **http://localhost:8030** |
-| 🌐 **Public via Cloudflared** |  
-```bash
-cloudflared tunnel --url http://localhost:8030
-``` |
+| 🌐 **Public via Cloudflared** | **Use the Cloudflared URL** |
 
 ---
 
@@ -81,6 +115,6 @@ bash <(curl -s https://pterodactyl-installer.se)
 
 <div align="center">
 
-✨ _Professional README generated with style_ ✨
+✨ _Professional Code with style_ ✨
 
-</di
+</div>
