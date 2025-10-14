@@ -96,10 +96,36 @@ sudo cloudflared service install
 
 ---
 
-## 🛠️ **Optional: Install Wings Daemon**
+## 🛠️ **Install Wings Daemon**
 
-```bash
-bash <(curl -s https://pterodactyl-installer.se)
+Run the official Wings installer to set up the Pterodactyl daemon, Docker, and dependencies.
+
+### **Installer Menu Example**
+
+```text
+* [0] Install the panel
+* [1] Install Wings
+* [2] Install both [0] and [1] on the same machine (wings script runs after panel)
+* [3] Install panel with canary version of the script (the versions that lives in master, may be broken!)
+* [4] Install Wings with canary version of the script (the versions that lives in master, may be broken!)
+* [5] Install both [3] and [4] on the same machine (wings script runs after panel)
+* [6] Uninstall panel or wings with canary version of the script (the versions that lives in master, may be broken!)
+* Input 0-6: 1
+* Retrieving release information...
+######################################################################
+* Pterodactyl panel installation script @ v1.2.0
+* Copyright (C) 2018 - 2025, Vilhelm Prytz, <vilhelm@prytznet.se>
+* https://github.com/pterodactyl-installer/pterodactyl-installer
+*
+* This script is not associated with the official Pterodactyl Project.
+* Running ubuntu version 22.04.
+* Latest pterodactyl/wings is v1.11.13
+##########################################
+* Do you want to automatically configure UFW (firewall)? (y/N): n
+* Do you want to automatically configure a user for database hosts? (y/N): n
+* WARNING: You cannot use Let's Encrypt with your hostname as an IP address! It must be a FQDN (e.g. node.example.org).
+* Do you want to automatically configure HTTPS using Let's Encrypt? (y/N): n
+* Proceed with installation? (y/N): y
 ```
 
 ---
