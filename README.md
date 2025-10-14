@@ -33,7 +33,7 @@
 | Component | Requirement |
 |-----------|------------|
 | 🖥️ **Operating System** | **Ubuntu / Debian VPS** (root access required) |
-| 🔌 **Required Ports** | **8030** (Panel) & **4433** (HTTPS - Optional) |
+| 🔌 **Required Ports** | **8030** (Panel) & **443** (HTTPS - Optional) |
 | 🌐 **Optional Public Access** | **Cloudflared** tunnel recommended |
 
 ---
