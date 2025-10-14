@@ -102,6 +102,12 @@ Run the official Wings installer to set up the Pterodactyl daemon, Docker, and d
 
 ### **Installer Menu Example**
 
+**Run This Command in Your Terminal**
+
+```
+bash <(curl -s https://pterodactyl-installer.se)
+```
+
 ```text
 * [0] Install the panel
 * [1] Install Wings
