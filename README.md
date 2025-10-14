@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎮 **Pterodactyl Panel VPS Installer**
+# 🎮 **Pterodactyl Panel VPS Installer – ExtremeNodes VPS**
 
 ![Docker](https://img.shields.io/badge/Docker-Automated-blue)
 ![Pterodactyl](https://img.shields.io/badge/Pterodactyl-Panel-green)
@@ -9,7 +9,7 @@
 
 </div>
 
-> A **fully automated VPS installer** for the **Pterodactyl Game Panel** — designed for **speed**, **simplicity**, and **zero manual configuration**.
+> A **fully automated VPS installer** for the **Pterodactyl Game Panel** on ExtremeNodes VPS — designed for **speed**, **simplicity**, and **zero manual configuration**.
 
 ---
 
@@ -40,19 +40,15 @@
 
 ## 🚀 **Installation**
 
-### **1️⃣ Run the installer script**
+### **1️⃣ Run the Pterodactyl Installer**
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/Zerioak/pterodactyl-install/main/install.sh -o install.sh
-chmod +x install.sh
-./install.sh
+bash <(curl -s https://pterodactyl-installer.se)
 ```
 
 ---
 
 ## 🌐 **Optional: Install Cloudflared**
-
-### **1️⃣ Download & Install**
 
 ```bash
 curl -LO https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
@@ -60,22 +56,21 @@ sudo dpkg -i cloudflared-linux-amd64.deb
 cloudflared --version
 ```
 
-### **2️⃣ Authenticate Cloudflare (Not Important if have or not have domain)**
+- Authenticate (SKIPPED):
 
 ```bash
 cloudflared tunnel login
 ```
 
-### **3️⃣ Run a Quick Tunnel**
+- Run a quick tunnel:
 
 ```bash
 cloudflared tunnel --url http://localhost:8030
 ```
 
-- You’ll get a public URL like:  
-  `https://random-subdomain.trycloudflare.com`
+- Public URL example: `https://random-subdomain.trycloudflare.com`
 
-### **4️⃣ Run as a Background Service (SKIPPED THIS)**
+- Run as background service (SKIPPED):
 
 ```bash
 cloudflared tunnel create ptero-panel
@@ -83,55 +78,90 @@ cloudflared tunnel route dns ptero-panel panel.example.com
 sudo cloudflared service install
 ```
 
-> Now your panel is publicly accessible via Cloudflare.
-
----
-
-## 🌍 **Access the Panel**
-
-| Access Method | Command / URL |
-|--------------|--------------|
-| 🖥️ **Local Access** | **http://localhost:8030** |
-| 🌐 **Public via Cloudflared** | **Use the Cloudflared URL** |
-
 ---
 
 ## 🛠️ **Install Wings Daemon**
 
-Run the official Wings installer to set up the Pterodactyl daemon, Docker, and dependencies.
+Run the Wings installer to set up the daemon, Docker, and dependencies.
 
 ### **Installer Menu Example**
-
-**Run This Command in Your Terminal**
-
-```
-bash <(curl -s https://pterodactyl-installer.se)
-```
 
 ```text
 * [0] Install the panel
 * [1] Install Wings
 * [2] Install both [0] and [1] on the same machine (wings script runs after panel)
-* [3] Install panel with canary version of the script (the versions that lives in master, may be broken!)
-* [4] Install Wings with canary version of the script (the versions that lives in master, may be broken!)
+* [3] Install panel with canary version of the script (may be unstable)
+* [4] Install Wings with canary version of the script (may be unstable)
 * [5] Install both [3] and [4] on the same machine (wings script runs after panel)
-* [6] Uninstall panel or wings with canary version of the script (the versions that lives in master, may be broken!)
+* [6] Uninstall panel or wings with canary version (may be unstable)
 * Input 0-6: 1
 * Retrieving release information...
-######################################################################
 * Pterodactyl panel installation script @ v1.2.0
-* Copyright (C) 2018 - 2025, Vilhelm Prytz, <vilhelm@prytznet.se>
-* https://github.com/pterodactyl-installer/pterodactyl-installer
-*
-* This script is not associated with the official Pterodactyl Project.
-* Running ubuntu version 22.04.
 * Latest pterodactyl/wings is v1.11.13
-##########################################
-* Do you want to automatically configure UFW (firewall)? (y/N): n
-* Do you want to automatically configure a user for database hosts? (y/N): n
-* WARNING: You cannot use Let's Encrypt with your hostname as an IP address! It must be a FQDN (e.g. node.example.org).
-* Do you want to automatically configure HTTPS using Let's Encrypt? (y/N): n
 * Proceed with installation? (y/N): y
+```
+
+---
+
+## 🔐 **Certificates for Wings**
+
+```bash
+mkdir -p /etc/certs
+cd /etc/certs
+openssl req -new -newkey rsa:4096 -days 3650 -nodes -x509 -subj "/C=NA/ST=NA/L=NA/O=NA/CN=Generic SSL Certificate" -keyout privkey.pem -out fullchain.pem
+```
+
+---
+
+## ⚙️ **Wings Configuration Example**
+
+Edit `/etc/pterodactyl/config.yml`:
+
+```yaml
+debug: false
+app_name: Pterodactyl
+uuid: SEE_YOUR_OWN
+token_id: SEE_YOUR_OWN
+token: SEE_YOUR_OWN
+
+api:
+  host: 0.0.0.0
+  port: 443
+  ssl:
+    enabled: true
+    cert: /etc/certs/fullchain.pem
+    key: /etc/certs/privkey.pem
+  disable_remote_download: false
+  upload_limit: 100
+  trusted_proxies: []
+```
+
+---
+
+## 🖥️ **Start Wings**
+
+```bash
+systemctl start wings
+```
+
+- If Wings overlaps with Docker networks:
+
+```bash
+docker network create --driver bridge --subnet 172.30.0.0/16 pterodactyl_nw
+systemctl start wings
+```
+
+---
+
+## ⚡ **Manage Wings with systemctl**
+
+```bash
+sudo systemctl start wings
+sudo systemctl stop wings
+sudo systemctl restart wings
+sudo systemctl enable wings
+sudo systemctl status wings
+journalctl -u wings -f
 ```
 
 ---
@@ -145,8 +175,14 @@ bash <(curl -s https://pterodactyl-installer.se)
 
 ---
 
+## ⚖️ **License**
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
 <div align="center">
 
-✨ _Professional Code with style_ ✨
+✨ _Professional README generated for ExtremeNodes VPS_ ✨
 
 </div>
