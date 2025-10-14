@@ -75,7 +75,7 @@ cloudflared tunnel --url http://localhost:8030
 - You’ll get a public URL like:  
   `https://random-subdomain.trycloudflare.com`
 
-### **4️⃣ Run as a Background Service (Optional)**
+### **4️⃣ Run as a Background Service (SKIPPED THIS)**
 
 ```bash
 cloudflared tunnel create ptero-panel
