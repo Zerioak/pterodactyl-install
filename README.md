@@ -1,82 +1,86 @@
-# Pterodactyl Panel VPS Installer
+<div align="center">
 
-> 🚀 Fully automated installer for Pterodactyl panel on VPS
-🛠️ Handles Docker setup, migrations, seeding eggs, and admin creation
-🌐 Installer script originally by Zerioak
-⚡ Pterodactyl panel project by Pterodactyl Software
+# 🎮 **Pterodactyl Panel VPS Installer**
 
+![Docker](https://img.shields.io/badge/Docker-Automated-blue)
+![Pterodactyl](https://img.shields.io/badge/Pterodactyl-Panel-green)
+![Auto Install](https://img.shields.io/badge/Installer-Fully%20Automated-orange)
+![Made with ❤️](https://img.shields.io/badge/Made%20with-❤️-ff69b4)
 
+</div>
 
-
----
-
-Features
-
-Installs Docker & Docker Compose automatically
-
-Sets up panel directories and volumes
-
-Creates docker-compose.yml for Panel, Database, and Redis
-
-Starts Docker containers automatically
-
-Runs migrations and seeds all default eggs
-
-Prompts to create an admin user
-
-Provides panel access instructions and Wings setup guidance
-
-
+> A **fully automated VPS installer** for the **Pterodactyl Game Panel** — designed for **speed**, **simplicity**, and **zero manual configuration**.
 
 ---
 
-Requirements
+## ✨ **Features**
 
-Ubuntu / Debian VPS (root access)
+✅ **Installs Docker & Docker Compose automatically**  
+✅ **Sets up all directories and volumes automatically**  
+✅ **Generates docker-compose.yml for Panel, MariaDB & Redis**  
+✅ **Starts all required Docker containers instantly**  
+✅ **Runs database migrations and seeds default eggs automatically**  
+✅ **Prompts you to create an admin user upon setup completion**  
+✅ **Provides panel access link and Wings installation guidance**
 
-Ports 8030 (panel) and 4433 (HTTPS) open
-
-
+> 💡 **Installer script by:** **Zerioak**  
+> 🐉 **Pterodactyl Panel by:** **Pterodactyl Software**
 
 ---
 
-# Installation
+## 📦 **Requirements**
 
-**1️⃣ Run the installer**
+| Component | Requirement |
+|-----------|------------|
+| 🖥️ **Operating System** | **Ubuntu / Debian VPS** (root access required) |
+| 🔌 **Required Ports** | **8030** (Panel) & **4433** (HTTPS - Optional) |
+| 🌐 **Optional Public Access** | **Cloudflared** tunnel recommended |
 
-```
+---
+
+## 🚀 **Installation**
+
+### **1️⃣ Run the installer script**
+
+```bash
 curl -sSL https://raw.githubusercontent.com/Zerioak/pterodactyl-install/main/install.sh -o install.sh
 chmod +x install.sh
 ./install.sh
 ```
 
-
 ---
 
-**3️⃣ Access the panel**
+## 🌍 **Access the Panel**
 
-Local: http://localhost:8030
-
-Optional: Expose externally using Cloudflared:
-
-
+| Access Method | Command / URL |
+|--------------|--------------|
+| 🖥️ **Local Access** | **http://localhost:8030** |
+| 🌐 **Public via Cloudflared** |  
+```bash
 cloudflared tunnel --url http://localhost:8030
-
+``` |
 
 ---
 
-**4️⃣ Install Wings daemon**
+## 🛠️ **Optional: Install Wings Daemon**
 
-Follow the official guide for Wings 
-```
+```bash
 bash <(curl -s https://pterodactyl-installer.se)
 ```
 
+---
+
+## 🎖️ **Credits**
+
+| Component | Author |
+|-----------|--------|
+| 🐉 **Pterodactyl Panel** | **Pterodactyl Software** |
+| ⚙️ **Installer Script** | **Zerioak** |
 
 ---
 
-Credits
+<div align="center">
 
-Pterodactyl panel by Pterodactyl Software
+✨ _Professional README generated with style_ ✨
 
-Installer script by Zerioak
+</di
