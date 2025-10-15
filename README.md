@@ -47,6 +47,10 @@ curl -sSL https://raw.githubusercontent.com/Zerioak/pterodactyl-install/main/ins
 chmod +x install.sh
 ./install.sh
 ```
+## ⚠️ **If User doesn't Create and Not Have administrator Access so run**
+```
+docker-compose run --rm panel php artisan p:user:make
+```
 
 ---
 
