@@ -42,8 +42,10 @@
 
 ### **1️⃣ Run the Pterodactyl Installer**
 
-```bash
-bash <(curl -s https://pterodactyl-installer.se)
+```
+curl -sSL https://raw.githubusercontent.com/Zerioak/pterodactyl-install/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
 ```
 
 ---
@@ -83,6 +85,10 @@ sudo cloudflared service install
 ## 🛠️ **Install Wings Daemon**
 
 Run the Wings installer to set up the daemon, Docker, and dependencies.
+```
+bash <(curl -s https://pterodactyl-installer.se)
+```
+**After You Run This You will be see**
 
 ### **Installer Menu Example**
 
