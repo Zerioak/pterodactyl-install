@@ -18,8 +18,8 @@ NC='\033[0m'
 clear
 echo -e "${CYAN}"
 echo "╔═══════════════════════════════════════════╗"
-echo "║      PTERODACTYL PANEL INSTALLER 🚀      ║"
-echo "║      Script by GPT & Zerioak       ║"
+echo "║      PTERODACTYL PANEL INSTALLER 🚀               ║"
+echo "║      Script by GPT & Zerioak                      ║"
 echo "╚═══════════════════════════════════════════╝"
 echo -e "${NC}"
 sleep 2
