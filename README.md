@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎮 **Pterodactyl Panel VPS Installer – ExtremeNodes VPS**
+# 🎮 **Pterodactyl Panel VPS Installer – IdkNodes VPS**
 
 ![Docker](https://img.shields.io/badge/Docker-Automated-blue)
 ![Pterodactyl](https://img.shields.io/badge/Pterodactyl-Panel-green)
