@@ -2,14 +2,11 @@
 set -e
 
 # =====================================================
-# 🚀 PTERODACTYL PANEL INSTALLER (UPGRADED)
-# 🧠 Smart • Secure • Stable • Interactive
-# 👑 Credits: Zerioak + GPT (Upgraded Edition)
+# 🚀 PTERODACTYL PANEL + 🪽 WINGS AUTO INSTALLER
+# 👑 Zerioak x GPT | ALL-IN-ONE Edition
 # =====================================================
 
-# -----------------------------
-# Colors
-# -----------------------------
+# ---------------- Colors ----------------
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
 YELLOW='\033[1;33m'
@@ -19,21 +16,15 @@ NC='\033[0m'
 BASE_DIR="/opt/pterodactyl"
 PANEL_DIR="$BASE_DIR/panel"
 
-# -----------------------------
-# Header
-# -----------------------------
 clear
 echo -e "${CYAN}"
-echo "╔══════════════════════════════════════════════════╗"
-echo "║        🚀 PTERODACTYL PANEL INSTALLER             ║"
-echo "║        👑 Zerioak x GPT | Upgraded Edition         ║"
-echo "╚══════════════════════════════════════════════════╝"
+echo "╔════════════════════════════════════════════════════╗"
+echo "║   🚀 PTERODACTYL PANEL + 🪽 WINGS INSTALLER         ║"
+echo "║          👑 Zerioak x GPT | Full Auto               ║"
+echo "╚════════════════════════════════════════════════════╝"
 echo -e "${NC}"
-sleep 1
 
-# -----------------------------
-# Spinner
-# -----------------------------
+# ---------------- Spinner ----------------
 spinner() {
     local pid=$1
     local delay=0.1
@@ -54,22 +45,17 @@ run_cmd() {
     echo -e "${GREEN} [OK]${NC}"
 }
 
-# -----------------------------
-# Root Check
-# -----------------------------
+# ---------------- Root Check ----------------
 if [[ $EUID -ne 0 ]]; then
     echo -e "${RED}[ERROR] Run as root!${NC}"
     exit 1
 fi
 
-# -----------------------------
-# Detect IP
-# -----------------------------
+# ---------------- Detect IP ----------------
 SERVER_IP=$(curl -s ifconfig.me || hostname -I | awk '{print $1}')
+echo -e "${CYAN}[+] Server IP: $SERVER_IP${NC}"
 
-# -----------------------------
-# Admin Setup
-# -----------------------------
+# ---------------- Admin Setup ----------------
 read -p "📧 Admin Email: " ADMIN_EMAIL
 read -p "👤 Username: " ADMIN_USERNAME
 read -p "🧑 First Name: " ADMIN_FIRSTNAME
@@ -77,47 +63,37 @@ read -p "🧑 Last Name: " ADMIN_LASTNAME
 read -s -p "🔑 Password: " ADMIN_PASSWORD
 echo
 
-# -----------------------------
-# Auto Secure Passwords
-# -----------------------------
+# ---------------- Auto Passwords ----------------
 DB_PASS=$(openssl rand -base64 24)
 DB_ROOT_PASS=$(openssl rand -base64 32)
 
-# -----------------------------
-# Install Dependencies
-# -----------------------------
+# ---------------- Dependencies ----------------
 run_cmd "System update" "apt update -y && apt upgrade -y"
-run_cmd "Installing dependencies" "apt install -y ca-certificates curl gnupg lsb-release nano git unzip"
+run_cmd "Installing dependencies" "apt install -y ca-certificates curl gnupg lsb-release nano git unzip ufw"
 
-# -----------------------------
-# Docker Install Check
-# -----------------------------
-if ! command -v docker &> /dev/null; then
+# ---------------- Docker ----------------
+if ! command -v docker &>/dev/null; then
     run_cmd "Installing Docker" "apt install -y docker.io"
     systemctl enable docker
     systemctl start docker
 fi
 
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
+if ! command -v docker-compose &>/dev/null && ! docker compose version &>/dev/null; then
     run_cmd "Installing Docker Compose" "apt install -y docker-compose"
 fi
 
-# -----------------------------
-# Directories
-# -----------------------------
+# ---------------- Firewall ----------------
+ufw allow 22
+ufw allow 8030
+ufw allow 8080
+ufw allow 2022
+ufw --force enable
+
+# ---------------- Panel Directories ----------------
 run_cmd "Creating directories" "mkdir -p $PANEL_DIR/data/{database,var,nginx,certs,logs}"
 cd $PANEL_DIR
 
-# -----------------------------
-# Cleanup old
-# -----------------------------
-docker compose down >/dev/null 2>&1 || true
-rm -rf ./data/database ./data/var ./data/logs
-mkdir -p ./data/database ./data/var ./data/logs
-
-# -----------------------------
-# docker-compose.yml
-# -----------------------------
+# ---------------- Docker Compose ----------------
 cat > docker-compose.yml << EOF
 version: '3.8'
 
@@ -166,21 +142,13 @@ services:
       REDIS_HOST: cache
 EOF
 
-# -----------------------------
-# Start Containers
-# -----------------------------
-run_cmd "Starting containers" "docker compose up -d"
+# ---------------- Start Panel ----------------
+run_cmd "Starting Panel" "docker compose up -d"
 sleep 15
 
-# -----------------------------
-# Setup Panel
-# -----------------------------
-run_cmd "Running migrations" "docker compose run --rm panel php artisan migrate --force"
-run_cmd "Seeding database" "docker compose run --rm panel php artisan db:seed --force"
+run_cmd "Panel migrate" "docker compose run --rm panel php artisan migrate --force"
+run_cmd "Panel seed" "docker compose run --rm panel php artisan db:seed --force"
 
-# -----------------------------
-# Create Admin
-# -----------------------------
 docker compose run --rm panel php artisan p:user:make \
   --email="$ADMIN_EMAIL" \
   --username="$ADMIN_USERNAME" \
@@ -189,16 +157,55 @@ docker compose run --rm panel php artisan p:user:make \
   --password="$ADMIN_PASSWORD" \
   --admin
 
-# -----------------------------
-# Finish
-# -----------------------------
+# =====================================================
+# 🪽 WINGS AUTO SETUP
+# =====================================================
+
+echo -e "${CYAN}[+] Installing Wings...${NC}"
+
+mkdir -p /etc/pterodactyl /var/lib/pterodactyl /var/log/pterodactyl /tmp/pterodactyl
+
+curl -L -o /usr/local/bin/wings https://github.com/pterodactyl/wings/releases/latest/download/wings_linux_amd64
+chmod +x /usr/local/bin/wings
+
+cat > /etc/systemd/system/wings.service << EOF
+[Unit]
+Description=Pterodactyl Wings Daemon
+After=docker.service
+Requires=docker.service
+
+[Service]
+User=root
+WorkingDirectory=/etc/pterodactyl
+LimitNOFILE=4096
+ExecStart=/usr/local/bin/wings
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reexec
+systemctl daemon-reload
+systemctl enable wings
+
+# ---------------- Finish ----------------
 echo -e "${GREEN}"
 echo "===================================================="
-echo "🎉 PTERODACTYL PANEL INSTALLED SUCCESSFULLY!"
+echo "🎉 PANEL + WINGS INSTALLED SUCCESSFULLY!"
+echo ""
 echo "🌐 Panel URL : http://${SERVER_IP}:8030"
 echo "📧 Email     : $ADMIN_EMAIL"
 echo "👤 Username  : $ADMIN_USERNAME"
-echo "🔐 Password  : (hidden for security)"
-echo "🛡️ DB Pass   : $DB_PASS"
+echo "🔐 Password  : (hidden)"
+echo ""
+echo "🪽 Wings:"
+echo "📂 Config Path: /etc/pterodactyl/config.yml"
+echo "➡️ Panel → Nodes → Create Node → Copy config.yml"
+echo "➡️ Paste in: /etc/pterodactyl/config.yml"
+echo "➡️ Run: systemctl start wings"
+echo ""
+echo "🔥 FULL AUTO STACK READY"
 echo "===================================================="
 echo -e "${NC}"
